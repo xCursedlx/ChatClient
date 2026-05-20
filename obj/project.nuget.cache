@@ -1,0 +1,31 @@
+{
+  "version": 2,
+  "dgSpecHash": "GY5W2pqzhxg=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\crazy\\RiderProjects\\ChatClient\\ChatClient\\ChatClient.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\crazy\\.nuget\\packages\\microsoft.aspnetcore.connections.abstractions\\10.0.8\\microsoft.aspnetcore.connections.abstractions.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\microsoft.aspnetcore.http.connections.client\\10.0.8\\microsoft.aspnetcore.http.connections.client.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\microsoft.aspnetcore.http.connections.common\\10.0.8\\microsoft.aspnetcore.http.connections.common.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\microsoft.aspnetcore.signalr.client\\10.0.8\\microsoft.aspnetcore.signalr.client.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\microsoft.aspnetcore.signalr.client.core\\10.0.8\\microsoft.aspnetcore.signalr.client.core.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\microsoft.aspnetcore.signalr.common\\10.0.8\\microsoft.aspnetcore.signalr.common.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\microsoft.aspnetcore.signalr.protocols.json\\10.0.8\\microsoft.aspnetcore.signalr.protocols.json.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\10.0.8\\microsoft.bcl.asyncinterfaces.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\microsoft.bcl.timeprovider\\10.0.8\\microsoft.bcl.timeprovider.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\microsoft.extensions.dependencyinjection\\10.0.8\\microsoft.extensions.dependencyinjection.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\10.0.8\\microsoft.extensions.dependencyinjection.abstractions.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\microsoft.extensions.features\\10.0.8\\microsoft.extensions.features.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\microsoft.extensions.logging\\10.0.8\\microsoft.extensions.logging.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\10.0.8\\microsoft.extensions.logging.abstractions.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\microsoft.extensions.options\\10.0.8\\microsoft.extensions.options.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\microsoft.extensions.primitives\\10.0.8\\microsoft.extensions.primitives.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\system.diagnostics.diagnosticsource\\10.0.8\\system.diagnostics.diagnosticsource.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\system.io.pipelines\\10.0.8\\system.io.pipelines.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\system.net.serversentevents\\10.0.8\\system.net.serversentevents.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\system.text.encodings.web\\10.0.8\\system.text.encodings.web.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\system.text.json\\10.0.8\\system.text.json.10.0.8.nupkg.sha512",
+    "C:\\Users\\crazy\\.nuget\\packages\\system.threading.channels\\10.0.8\\system.threading.channels.10.0.8.nupkg.sha512"
+  ],
+  "logs": []
+}

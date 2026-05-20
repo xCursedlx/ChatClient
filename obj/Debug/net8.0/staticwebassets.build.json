@@ -1,0 +1,58 @@
+{
+  "Version": 1,
+  "Hash": "FQ6gixLZDa+6sGgRlPOBNUP+sn6q1R6KJkKn4S0krvs=",
+  "Source": "ChatClient",
+  "BasePath": "_content/ChatClient",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "ChatClient\\wwwroot",
+      "Source": "ChatClient",
+      "ContentRoot": "C:\\Users\\crazy\\RiderProjects\\ChatClient\\ChatClient\\wwwroot\\",
+      "BasePath": "_content/ChatClient",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "C:\\Users\\crazy\\RiderProjects\\ChatClient\\ChatClient\\wwwroot\\index.html",
+      "SourceId": "ChatClient",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\crazy\\RiderProjects\\ChatClient\\ChatClient\\wwwroot\\",
+      "BasePath": "_content/ChatClient",
+      "RelativePath": "index.html",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\index.html"
+    },
+    {
+      "Identity": "C:\\Users\\crazy\\RiderProjects\\ChatClient\\ChatClient\\wwwroot\\style.css",
+      "SourceId": "ChatClient",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\crazy\\RiderProjects\\ChatClient\\ChatClient\\wwwroot\\",
+      "BasePath": "_content/ChatClient",
+      "RelativePath": "style.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\style.css"
+    }
+  ]
+}
