@@ -19,17 +19,19 @@ public class LmStudioService
         if (history.Count == 0)
             return "";
 
-        var messages = new List<object>();
+        var lastMessage = history.First();
+        var chatContext = string.Join("\n",
+            history.AsEnumerable().Reverse()
+                .Select(m => $"{m.SenderLogin}: {m.Text}"));
 
-        foreach (var msg in history)
+        var messages = new List<object>
         {
-            var isLast = msg == history.Last();
-            messages.Add(new
+            new
             {
-                role = isLast ? "user" : "assistant",
-                content = $"{msg.UserLogin}: {msg.Content}"
-            });
-        }
+                role = "user",
+                content = $"История чата:\n{chatContext}\n\nПоследнее сообщение от {lastMessage.SenderLogin}: \"{lastMessage.Text}\"\n\nОтветь именно на это последнее сообщение."
+            }
+        };
 
         var requestBody = new
         {

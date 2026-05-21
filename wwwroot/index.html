@@ -117,16 +117,16 @@
             }
 
             if (messages.length === lastCount &&
-                messages[messages.length - 1]?.content === lastLastContent) return;
+                messages[messages.length - 1]?.text === lastLastContent) return;
 
             lastCount = messages.length;
-            lastLastContent = messages[messages.length - 1]?.content ?? '';
+            lastLastContent = messages[messages.length - 1]?.text ?? '';
 
             empty.style.display = 'none';
             chat.innerHTML = '';
 
             for (const msg of messages) {
-                const isAnon = msg.userLogin === 'anonymous';
+                const isAnon = msg.senderLogin === 'Cursed';
                 const time = new Date(msg.timestamp).toLocaleTimeString('ru-RU', {
                     hour: '2-digit', minute: '2-digit'
                 });
@@ -135,10 +135,10 @@
                 div.className = `message ${isAnon ? 'anon' : 'ai'}`;
                 div.innerHTML = `
                     <div class="msg-meta">
-                        <span class="msg-author">${isAnon ? 'Аноним' : msg.userLogin}</span>
+                        <span class="msg-author">${isAnon ? 'Курседыш' : msg.senderLogin}</span>
                         <span class="msg-time">${time}</span>
                     </div>
-                    <div class="msg-bubble">${escapeHtml(msg.content)}</div>
+                    <div class="msg-bubble">${escapeHtml(msg.text)}</div>
                 `;
                 chat.appendChild(div);
             }
@@ -161,11 +161,11 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                content: text,
-                userLogin: 'anonymous',
+                text: text,
+                senderLogin: 'Cursed',
                 timestamp: new Date().toISOString(),
                 chatId: 0,
-                id: 0
+                id: '00000000-0000-0000-0000-000000000000'
             })
         });
     }
