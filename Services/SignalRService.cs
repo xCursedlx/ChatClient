@@ -40,7 +40,6 @@ public class SignalRService
 
     private HttpClientHandler CreateHttpHandler()
     {
-        // Только для локальной разработки — в продакшене убрать
         return new HttpClientHandler
         {
             ServerCertificateCustomValidationCallback =
@@ -223,7 +222,6 @@ public class SignalRService
         await _anonConnection.StartAsync();
         Console.WriteLine("[SignalR] Аноним подключён");
 
-        // Надёжная проверка членства через десериализацию
         var chatsResult = await _anonConnection.InvokeAsync<Response>("GetChats");
         var dataStr = chatsResult.Data?.ToString() ?? "";
         var isInChat = false;
@@ -254,7 +252,6 @@ public class SignalRService
         {
             await Task.Delay(TimeSpan.FromMinutes(18));
 
-            // Обновляем оба токена
             if (_tokenService.IsExpired() || _anonTokenService.IsExpired())
             {
                 Console.WriteLine("[Auth] Токены истекают, переавторизация...");
