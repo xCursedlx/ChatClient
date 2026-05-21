@@ -32,6 +32,15 @@ public class SignalRService
         _mockMode = mockMode;
     }
 
+    private HttpClientHandler CreateHttpHandler()
+    {
+        return new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+    }
+
     public async Task InitializeAsync()
     {
         if (_mockMode)
@@ -44,7 +53,10 @@ public class SignalRService
         Console.WriteLine("[SignalR] Первое подключение для авторизации...");
 
         _connection = new HubConnectionBuilder()
-            .WithUrl(_serverUrl)
+            .WithUrl(_serverUrl, options =>
+            {
+                options.HttpMessageHandlerFactory = _ => CreateHttpHandler();
+            })
             .Build();
 
         await _connection.StartAsync();
@@ -145,6 +157,7 @@ public class SignalRService
         _connection = new HubConnectionBuilder()
             .WithUrl(_serverUrl, options =>
             {
+                options.HttpMessageHandlerFactory = _ => CreateHttpHandler();
                 options.AccessTokenProvider = () =>
                     Task.FromResult<string?>(_tokenService.GetToken());
             })
