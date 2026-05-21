@@ -10,13 +10,10 @@ var login = config["Login"]!;
 var password = config["Password"]!;
 var chatId = ulong.Parse(config["ChatId"]!);
 var mockMode = bool.Parse(config["MockMode"] ?? "false");
-var anonLogin = config["AnonLogin"] ?? "Cursed";
-var anonPassword = config["AnonPassword"] ?? "xCursedlx";
 
 var tokenService = new TokenService();
 var lmService = new LmStudioService(lmUrl);
-var signalR = new SignalRService(serverUrl, login, password, chatId,
-    tokenService, lmService, mockMode, anonLogin, anonPassword);
+var signalR = new SignalRService(serverUrl, login, password, chatId, tokenService, lmService, mockMode);
 
 builder.Services.AddSingleton(tokenService);
 builder.Services.AddSingleton(lmService);

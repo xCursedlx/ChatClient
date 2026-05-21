@@ -126,7 +126,12 @@
             chat.innerHTML = '';
 
             for (const msg of messages) {
-                const isAnon = msg.senderLogin === 'Cursed';
+                const isAnon = msg.text.startsWith('[Аноним]:');
+                const displayText = isAnon
+                    ? msg.text.replace('[Аноним]:', '').trim()
+                    : msg.text;
+                const displayName = isAnon ? 'Аноним' : msg.senderLogin;
+
                 const time = new Date(msg.timestamp).toLocaleTimeString('ru-RU', {
                     hour: '2-digit', minute: '2-digit'
                 });
@@ -135,10 +140,10 @@
                 div.className = `message ${isAnon ? 'anon' : 'ai'}`;
                 div.innerHTML = `
                     <div class="msg-meta">
-                        <span class="msg-author">${isAnon ? 'Курседыш' : msg.senderLogin}</span>
+                        <span class="msg-author">${displayName}</span>
                         <span class="msg-time">${time}</span>
                     </div>
-                    <div class="msg-bubble">${escapeHtml(msg.text)}</div>
+                    <div class="msg-bubble">${escapeHtml(displayText)}</div>
                 `;
                 chat.appendChild(div);
             }
@@ -162,7 +167,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 text: text,
-                senderLogin: 'Cursed',
+                senderLogin: 'anonymous',
                 timestamp: new Date().toISOString(),
                 chatId: 0,
                 id: '00000000-0000-0000-0000-000000000000'

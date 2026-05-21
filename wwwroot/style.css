@@ -373,38 +373,6 @@ body::after {
     border-right: 2px solid var(--text-muted);
 }
 
-.msg-bubble.highlighted {
-    border-color: rgba(245,166,35,0.4);
-    box-shadow: 0 0 12px rgba(245,166,35,0.08);
-}
-
-.msg-quote {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    background: rgba(245,166,35,0.05);
-    border-left: 2px solid rgba(245,166,35,0.4);
-    border-radius: 4px 4px 0 0;
-    padding: 6px 10px;
-    margin-bottom: -4px;
-}
-
-.quote-author {
-    font-size: 0.68rem;
-    font-weight: 600;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.quote-text {
-    font-size: 0.78rem;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
 #input-area {
     padding: 16px 0 24px;
     border-top: 1px solid var(--border);
