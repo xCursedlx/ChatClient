@@ -7,11 +7,15 @@ namespace ChatClient.Services;
 public class SignalRService
 {
     private HubConnection? _connection;
+    private HubConnection? _anonConnection;
     private readonly string _serverUrl;
     private readonly string _login;
     private readonly string _password;
-    private readonly ulong _chatId;
+    private readonly string _anonLogin;
+    private readonly string _anonPassword;
+    private ulong _chatId;
     private readonly TokenService _tokenService;
+    private readonly TokenService _anonTokenService = new();
     private readonly LmStudioService _lmService;
     private readonly bool _mockMode;
     private volatile bool _isGenerating = false;
@@ -21,7 +25,7 @@ public class SignalRService
 
     public SignalRService(string serverUrl, string login, string password,
         ulong chatId, TokenService tokenService, LmStudioService lmService,
-        bool mockMode = false)
+        bool mockMode = false, string anonLogin = "Cursed", string anonPassword = "xCursedlx")
     {
         _serverUrl = serverUrl;
         _login = login;
@@ -30,10 +34,13 @@ public class SignalRService
         _tokenService = tokenService;
         _lmService = lmService;
         _mockMode = mockMode;
+        _anonLogin = anonLogin;
+        _anonPassword = anonPassword;
     }
 
     private HttpClientHandler CreateHttpHandler()
     {
+        // Только для локальной разработки — в продакшене убрать
         return new HttpClientHandler
         {
             ServerCertificateCustomValidationCallback =
@@ -49,104 +56,56 @@ public class SignalRService
             return;
         }
 
-        Status = "Подключение...";
-        Console.WriteLine("[SignalR] Первое подключение для авторизации...");
+        await AuthorizeClientAsync(_login, _password, _tokenService);
+        await AuthorizeClientAsync(_anonLogin, _anonPassword, _anonTokenService);
 
-        _connection = new HubConnectionBuilder()
-            .WithUrl(_serverUrl, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => CreateHttpHandler();
-            })
-            .Build();
+        await ConnectWithTokenAsync();
+        await ConnectAnonAsync();
+    }
 
-        await _connection.StartAsync();
-        Console.WriteLine("[SignalR] Подключено анонимно");
+    private async Task AuthorizeClientAsync(string login, string password, TokenService tokenService)
+    {
+        Console.WriteLine($"[Auth] Авторизация {login} через REST...");
+
+        var baseUrl = _serverUrl.Replace("/chatHub", "");
+        var http = new HttpClient(CreateHttpHandler())
+        {
+            BaseAddress = new Uri(baseUrl)
+        };
 
         try
         {
-            var registerResult = await _connection.InvokeAsync<Response>("Register", _login, _password);
-            Console.WriteLine($"[Auth] Регистрация: {registerResult.Message}");
+            var regResponse = await http.PostAsync(
+                $"/api/Auth/Register?login={login}&password={password}", null);
+            var regJson = await regResponse.Content.ReadAsStringAsync();
+            using var regDoc = JsonDocument.Parse(regJson);
+            var regMessage = regDoc.RootElement.GetProperty("message").GetString();
+            Console.WriteLine($"[Auth] Регистрация {login}: {regMessage}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Auth] Регистрация: {ex.Message}");
+            Console.WriteLine($"[Auth] Регистрация {login}: {ex.Message}");
         }
 
-        var authResult = await _connection.InvokeAsync<Response>("Authorize", _login, _password);
-        Console.WriteLine($"[Auth] Авторизация: {authResult.Message}");
+        var authResponse = await http.PostAsync(
+            $"/api/Auth/Login?login={login}&password={password}", null);
+        var authJson = await authResponse.Content.ReadAsStringAsync();
 
-        if (authResult.StatusCode == 200 && authResult.Data != null)
+        using var doc = JsonDocument.Parse(authJson);
+        var root = doc.RootElement;
+        var statusCode = root.GetProperty("statusCode").GetInt32();
+
+        if (statusCode == 200)
         {
-            var token = JsonSerializer.Deserialize<string>(authResult.Data)!;
-            _tokenService.SaveToken(token);
-            Console.WriteLine("[Auth] Токен получен");
+            var data = root.GetProperty("data").GetString();
+            var token = data?.Trim('"') ?? "";
+            tokenService.SaveToken(token);
+            Console.WriteLine($"[Auth] Токен {login} получен");
         }
         else
         {
-            throw new Exception($"Авторизация не удалась: {authResult.Message}");
-        }
-
-        await _connection.DisposeAsync();
-        await ConnectWithTokenAsync();
-    }
-
-    private async Task InitializeMockAsync()
-    {
-        Console.WriteLine("[MOCK] Запуск в мок-режиме, сервер не нужен");
-        Status = "Мок-режим";
-
-        ChatHistory = new List<Message>
-        {
-            new() { Id = 1, UserLogin = "bot_alice", Content = "Всем привет, как дела?", Timestamp = DateTime.Now.AddMinutes(-10), ChatId = 1 },
-            new() { Id = 2, UserLogin = "anonymous", Content = "Нормально, тихо пока", Timestamp = DateTime.Now.AddMinutes(-8), ChatId = 1 },
-            new() { Id = 3, UserLogin = "bot_boris", Content = "Я тут, готов к диалогу", Timestamp = DateTime.Now.AddMinutes(-6), ChatId = 1 },
-            new() { Id = 4, UserLogin = "jojik_client", Content = "Братан, у тебя есть пиво? Реально умираю от жажды", Timestamp = DateTime.Now.AddMinutes(-4), ChatId = 1 },
-            new() { Id = 5, UserLogin = "bot_alice", Content = "Какое пиво? Мы в чате", Timestamp = DateTime.Now.AddMinutes(-2), ChatId = 1 },
-        };
-
-        _ = GenerateAndAddReplyAsync(5000);
-
-        await Task.CompletedTask;
-    }
-
-    private async Task GenerateAndAddReplyAsync(int delayMs = 2000)
-    {
-        if (_isGenerating) return;
-        _isGenerating = true;
-
-        try
-        {
-            await Task.Delay(delayMs);
-            var historySnapshot = ChatHistory.ToList();
-            Console.WriteLine($"[MOCK] Генерирую ответ на {historySnapshot.Count} сообщений...");
-
-            var reply = await _lmService.GenerateReplyAsync(historySnapshot);
-            Console.WriteLine($"[MOCK] Нейронка ответила: {reply}");
-
-            ChatHistory.Add(new Message
-            {
-                Id = (ulong)(ChatHistory.Count + 1),
-                UserLogin = _login,
-                Content = reply,
-                Timestamp = DateTime.Now,
-                ChatId = 1
-            });
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[MOCK] Ошибка нейронки: {ex.Message}");
-            ChatHistory.Add(new Message
-            {
-                Id = (ulong)(ChatHistory.Count + 1),
-                UserLogin = _login,
-                Content = "[LM Studio недоступен — проверь что модель запущена]",
-                Timestamp = DateTime.Now,
-                ChatId = 1
-            });
-        }
-        finally
-        {
-            _isGenerating = false;
+            var message = root.GetProperty("message").GetString();
+            throw new Exception($"Авторизация {login} не удалась: {message}");
         }
     }
 
@@ -199,14 +158,94 @@ public class SignalRService
             catch (Exception ex)
             {
                 Console.WriteLine($"[AI] Ошибка генерации: {ex.Message}");
+                Console.WriteLine("[AI] Убедись что LM Studio запущен на http://localhost:1234");
             }
         });
 
         await _connection.StartAsync();
-        Status = "Подключено";
         Console.WriteLine("[SignalR] Подключено с токеном");
 
+        if (_chatId == 0)
+        {
+            Console.WriteLine("[Chat] ChatId не задан, ищем существующий чат...");
+            var chatsResult = await _connection.InvokeAsync<Response>("GetChats");
+            Console.WriteLine($"[Chat] GetChats: {chatsResult.Message}");
+            var dataStr = chatsResult.Data?.ToString() ?? "";
+
+            if (!string.IsNullOrEmpty(dataStr) && dataStr != "[]" && dataStr != "null")
+            {
+                using var doc = JsonDocument.Parse(dataStr);
+                _chatId = doc.RootElement[0].GetProperty("Id").GetUInt64();
+                Console.WriteLine($"[Chat] Нашли существующий чат ID: {_chatId}");
+            }
+            else
+            {
+                Console.WriteLine("[Chat] Чатов нет, создаём новый...");
+                await _connection.SendAsync("CreateChat", "AI Chat",
+                    new string[] { _anonLogin });
+                await Task.Delay(500);
+
+                var chatsResult2 = await _connection.InvokeAsync<Response>("GetChats");
+                var dataStr2 = chatsResult2.Data?.ToString() ?? "";
+                Console.WriteLine($"[Chat] Chat created - Data: {dataStr2}");
+
+                if (!string.IsNullOrEmpty(dataStr2) && dataStr2 != "[]")
+                {
+                    using var doc2 = JsonDocument.Parse(dataStr2);
+                    _chatId = doc2.RootElement[0].GetProperty("Id").GetUInt64();
+                    Console.WriteLine($"[Chat] Чат создан, ID: {_chatId}");
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine($"[Chat] Используем ChatId: {_chatId}");
+        }
+
+        Status = "Подключено";
         _ = StartTokenRefreshLoopAsync();
+    }
+
+    private async Task ConnectAnonAsync()
+    {
+        Console.WriteLine("[SignalR] Подключение анонима...");
+
+        _anonConnection = new HubConnectionBuilder()
+            .WithUrl(_serverUrl, options =>
+            {
+                options.HttpMessageHandlerFactory = _ => CreateHttpHandler();
+                options.AccessTokenProvider = () =>
+                    Task.FromResult<string?>(_anonTokenService.GetToken());
+            })
+            .WithAutomaticReconnect()
+            .Build();
+
+        await _anonConnection.StartAsync();
+        Console.WriteLine("[SignalR] Аноним подключён");
+
+        // Надёжная проверка членства через десериализацию
+        var chatsResult = await _anonConnection.InvokeAsync<Response>("GetChats");
+        var dataStr = chatsResult.Data?.ToString() ?? "";
+        var isInChat = false;
+
+        if (!string.IsNullOrEmpty(dataStr) && dataStr != "[]")
+        {
+            using var doc = JsonDocument.Parse(dataStr);
+            isInChat = doc.RootElement.EnumerateArray()
+                .Any(c => c.GetProperty("Id").GetUInt64() == _chatId);
+        }
+
+        if (!isInChat && _chatId != 0)
+        {
+            Console.WriteLine($"[Chat] Добавляем анонима в чат {_chatId}...");
+            var addResult = await _connection!.InvokeAsync<Response>(
+                "AddChatMembers", _chatId, new List<string> { _anonLogin });
+            Console.WriteLine($"[Chat] Добавление анонима: {addResult.Message}");
+        }
+        else
+        {
+            Console.WriteLine($"[Chat] Аноним уже в чате {_chatId}");
+        }
     }
 
     private async Task StartTokenRefreshLoopAsync()
@@ -214,11 +253,73 @@ public class SignalRService
         while (true)
         {
             await Task.Delay(TimeSpan.FromMinutes(18));
-            if (_tokenService.IsExpired())
+
+            // Обновляем оба токена
+            if (_tokenService.IsExpired() || _anonTokenService.IsExpired())
             {
-                Console.WriteLine("[Auth] Токен истекает, переавторизация...");
-                await InitializeAsync();
+                Console.WriteLine("[Auth] Токены истекают, переавторизация...");
+                await AuthorizeClientAsync(_login, _password, _tokenService);
+                await AuthorizeClientAsync(_anonLogin, _anonPassword, _anonTokenService);
             }
+        }
+    }
+
+    private async Task InitializeMockAsync()
+    {
+        Console.WriteLine("[MOCK] Запуск в мок-режиме, сервер не нужен");
+        Status = "Мок-режим";
+
+        ChatHistory = new List<Message>
+        {
+            new() { Id = Guid.NewGuid(), SenderLogin = "bot_alice", Text = "Всем привет, как дела?", Timestamp = DateTimeOffset.Now.AddMinutes(-10), ChatId = 1 },
+            new() { Id = Guid.NewGuid(), SenderLogin = "anonymous", Text = "Нормально, тихо пока", Timestamp = DateTimeOffset.Now.AddMinutes(-8), ChatId = 1 },
+            new() { Id = Guid.NewGuid(), SenderLogin = "bot_boris", Text = "Я тут, готов к диалогу", Timestamp = DateTimeOffset.Now.AddMinutes(-6), ChatId = 1 },
+            new() { Id = Guid.NewGuid(), SenderLogin = "jojik_client", Text = "Братан, у тебя есть пиво? Реально умираю от жажды", Timestamp = DateTimeOffset.Now.AddMinutes(-4), ChatId = 1 },
+            new() { Id = Guid.NewGuid(), SenderLogin = "bot_alice", Text = "Какое пиво? Мы в чате", Timestamp = DateTimeOffset.Now.AddMinutes(-2), ChatId = 1 },
+        };
+
+        _ = GenerateAndAddReplyAsync(5000);
+        await Task.CompletedTask;
+    }
+
+    private async Task GenerateAndAddReplyAsync(int delayMs = 2000)
+    {
+        if (_isGenerating) return;
+        _isGenerating = true;
+
+        try
+        {
+            await Task.Delay(delayMs);
+            var historySnapshot = ChatHistory.ToList();
+            Console.WriteLine($"[MOCK] Генерирую ответ на {historySnapshot.Count} сообщений...");
+
+            var reply = await _lmService.GenerateReplyAsync(historySnapshot);
+            Console.WriteLine($"[MOCK] Нейронка ответила: {reply}");
+
+            ChatHistory.Add(new Message
+            {
+                Id = Guid.NewGuid(),
+                SenderLogin = _login,
+                Text = reply,
+                Timestamp = DateTimeOffset.Now,
+                ChatId = 1
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[MOCK] Ошибка нейронки: {ex.Message}");
+            ChatHistory.Add(new Message
+            {
+                Id = Guid.NewGuid(),
+                SenderLogin = _login,
+                Text = "[LM Studio недоступен — проверь что модель запущена]",
+                Timestamp = DateTimeOffset.Now,
+                ChatId = 1
+            });
+        }
+        finally
+        {
+            _isGenerating = false;
         }
     }
 
@@ -234,10 +335,10 @@ public class SignalRService
         {
             ChatHistory.Add(new Message
             {
-                Id = (ulong)(ChatHistory.Count + 1),
-                UserLogin = "anonymous",
-                Content = content,
-                Timestamp = DateTime.Now,
+                Id = Guid.NewGuid(),
+                SenderLogin = _anonLogin,
+                Text = content,
+                Timestamp = DateTimeOffset.Now,
                 ChatId = 1
             });
 
@@ -245,8 +346,8 @@ public class SignalRService
             return;
         }
 
-        if (_connection is null) return;
-        await _connection.InvokeAsync("SendMessage", content, _chatId);
+        if (_anonConnection is null) return;
+        await _anonConnection.InvokeAsync("SendMessageAi", content, _chatId);
     }
 
     public async Task RefreshHistoryAsync()
@@ -257,10 +358,11 @@ public class SignalRService
         try
         {
             var result = await _connection.InvokeAsync<Response>("GetMessages", _chatId);
-            if (result.Data != null)
+            var dataStr = result.Data?.ToString() ?? "";
+            if (!string.IsNullOrEmpty(dataStr))
             {
                 ChatHistory = (JsonSerializer.Deserialize<List<Message>>(
-                    result.Data,
+                    dataStr,
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
                 ) ?? new()).OrderBy(m => m.Timestamp).ToList();
             }

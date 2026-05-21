@@ -2,9 +2,9 @@
 
 public class Message
 {
-    public ulong Id { get; set; }
-    public string Content { get; set; } = "";
-    public DateTime Timestamp { get; set; }
+    public Guid Id { get; set; }
+    public string Text { get; set; } = "";
+    public string SenderLogin { get; set; } = "";
     public ulong ChatId { get; set; }
-    public string UserLogin { get; set; } = "";
+    public DateTimeOffset Timestamp { get; set; }
 }
