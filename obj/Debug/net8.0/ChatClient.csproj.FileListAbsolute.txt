@@ -49,3 +49,4 @@ C:\Users\crazy\RiderProjects\ChatClient\ChatClient\bin\Debug\net8.0\System.Threa
 C:\Users\crazy\RiderProjects\ChatClient\ChatClient\bin\Debug\net8.0\runtimes\browser\lib\net8.0\System.Text.Encodings.Web.dll
 C:\Users\crazy\RiderProjects\ChatClient\ChatClient\obj\Debug\net8.0\ChatClient.csproj.AssemblyReference.cache
 C:\Users\crazy\RiderProjects\ChatClient\ChatClient\obj\Debug\net8.0\ChatClient.csproj.Up2Date
+C:\Users\crazy\RiderProjects\ChatClient\ChatClient\obj\Debug\net8.0\ChatClient.sourcelink.json

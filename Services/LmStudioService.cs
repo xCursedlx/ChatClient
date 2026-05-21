@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using ChatClient.Models;
 
 namespace ChatClient.Services;
@@ -53,14 +54,9 @@ public class LmStudioService
             .GetProperty("content")
             .GetString() ?? "";
 
-        var colonIndex = reply.IndexOf(':');
-        if (colonIndex > 0 && colonIndex < 40)
-        {
-            var prefix = reply[..colonIndex].Trim();
-            if (!prefix.Contains('.') && !prefix.Contains('!') && !prefix.Contains('?'))
-                reply = reply[(colonIndex + 1)..].TrimStart();
-        }
+        reply = Regex.Replace(reply, @"\b\w+_\w+\s*:\s*", "");
+        reply = Regex.Replace(reply, @"^\w+\s*:\s*", "");
 
-        return reply;
+        return reply.Trim();
     }
 }
