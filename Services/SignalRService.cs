@@ -67,21 +67,32 @@ public class SignalRService
 
         try
         {
-            var regResponse = await _restClient.PostAsync(
-                $"/api/Auth/Register?login={login}&password={password}", null);
+            var regResponse = await _restClient.GetAsync(
+                $"/api/Auth/Register?login={login}&password={password}");
             var regJson = await regResponse.Content.ReadAsStringAsync();
-            using var regDoc = JsonDocument.Parse(regJson);
-            var regMessage = regDoc.RootElement.GetProperty("message").GetString();
-            Console.WriteLine($"[Auth] Регистрация {login}: {regMessage}");
+
+            if (!string.IsNullOrWhiteSpace(regJson))
+            {
+                using var regDoc = JsonDocument.Parse(regJson);
+                var regMessage = regDoc.RootElement.GetProperty("message").GetString();
+                Console.WriteLine($"[Auth] Регистрация {login}: {regMessage}");
+            }
+            else
+            {
+                Console.WriteLine($"[Auth] Регистрация {login}: пустой ответ — {regResponse.StatusCode}");
+            }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[Auth] Регистрация {login}: {ex.Message}");
         }
 
-        var authResponse = await _restClient.PostAsync(
-            $"/api/Auth/Login?login={login}&password={password}", null);
+        var authResponse = await _restClient.GetAsync(
+            $"/api/Auth/Authorize?login={login}&password={password}");
         var authJson = await authResponse.Content.ReadAsStringAsync();
+
+        if (string.IsNullOrWhiteSpace(authJson))
+            throw new Exception($"Авторизация {login} не удалась: пустой ответ — {authResponse.StatusCode}");
 
         using var doc = JsonDocument.Parse(authJson);
         var root = doc.RootElement;
