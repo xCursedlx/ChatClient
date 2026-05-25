@@ -19,6 +19,7 @@ public class SignalRService
     private readonly LmStudioService _lmService;
     private readonly bool _mockMode;
     private volatile bool _isGenerating = false;
+    private readonly HttpClient _restClient;
 
     public List<Message> ChatHistory { get; private set; } = new();
     public string Status { get; private set; } = "Отключено";
@@ -36,6 +37,13 @@ public class SignalRService
         _mockMode = mockMode;
         _anonLogin = anonLogin;
         _anonPassword = anonPassword;
+
+        var uri = new Uri(serverUrl);
+        var baseUrl = $"{uri.Scheme}://{uri.Authority}";
+        _restClient = new HttpClient(CreateHttpHandler())
+        {
+            BaseAddress = new Uri(baseUrl)
+        };
     }
 
     private HttpClientHandler CreateHttpHandler()
@@ -66,29 +74,34 @@ public class SignalRService
     {
         Console.WriteLine($"[Auth] Авторизация {login} через REST...");
 
-        var baseUrl = _serverUrl.Replace("/chatHub", "");
-        var http = new HttpClient(CreateHttpHandler())
-        {
-            BaseAddress = new Uri(baseUrl)
-        };
-
         try
         {
-            var regResponse = await http.PostAsync(
-                $"/api/Auth/Register?login={login}&password={password}", null);
+            var regResponse = await _restClient.GetAsync(
+                $"/api/Auth/Register?login={login}&password={password}");
             var regJson = await regResponse.Content.ReadAsStringAsync();
-            using var regDoc = JsonDocument.Parse(regJson);
-            var regMessage = regDoc.RootElement.GetProperty("message").GetString();
-            Console.WriteLine($"[Auth] Регистрация {login}: {regMessage}");
+
+            if (!string.IsNullOrWhiteSpace(regJson))
+            {
+                using var regDoc = JsonDocument.Parse(regJson);
+                var regMessage = regDoc.RootElement.GetProperty("message").GetString();
+                Console.WriteLine($"[Auth] Регистрация {login}: {regMessage}");
+            }
+            else
+            {
+                Console.WriteLine($"[Auth] Регистрация {login}: пустой ответ — {regResponse.StatusCode}");
+            }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[Auth] Регистрация {login}: {ex.Message}");
         }
 
-        var authResponse = await http.PostAsync(
-            $"/api/Auth/Login?login={login}&password={password}", null);
+        var authResponse = await _restClient.GetAsync(
+            $"/api/Auth/Authorize?login={login}&password={password}");
         var authJson = await authResponse.Content.ReadAsStringAsync();
+
+        if (string.IsNullOrWhiteSpace(authJson))
+            throw new Exception($"Авторизация {login} не удалась: пустой ответ — {authResponse.StatusCode}");
 
         using var doc = JsonDocument.Parse(authJson);
         var root = doc.RootElement;
